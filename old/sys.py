@@ -1,3 +1,8 @@
+"""
+Time invariant system
+Linear
+"""
+
 import numpy as np
 from robot import Robot
 
@@ -15,6 +20,8 @@ class SystemLTI():
         self.robot = Robot(self, self.xdims, self.udims, T)
         self.reset_robot()
         self.T = T
+        self.x_f = np.zeros((xdims, 1))
+        self.u_f = np.zeros((xdims, 1))
 
     def reset_robot(self):
         if not self.robot:
@@ -58,8 +65,8 @@ class SystemLTI():
         u = np.array(u)
         Q = np.array(Q)
         R = np.array(R)        
-        q = np.matmul(np.matmul(x.T, Q), x)
-        r = np.matmul(np.matmul(u.T, R), u)
+        q = np.matmul(np.matmul((self.x_f - x).T, Q), self.x_f - x)
+        r = np.matmul(np.matmul((self.u_f - u).T, R), self.u_f - u)
         return (q + r)[0,0]
 
     def step(self, x, u):
