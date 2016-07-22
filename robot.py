@@ -1,6 +1,7 @@
 from lqr2 import LQR
 from sys2 import SystemLTI
 import numpy as np
+from vis import Visualizer
 from utils import matmul
 """
 Robot
@@ -47,20 +48,20 @@ class RobotLTI():
         return self.lqr.K[0]
 
     def control(self, u):
-        x_p = self.sys.step(self.x, u)
-        cost = self.cost(self.x, u)
-        self.x = x_p
-        return x_p, cost
+        x_p = self.sys.step(self.x - self.x_f, u - self.u_f)
+        cost = self.cost(self.x - self.x_f, u - self.u_f)
+        self.x = x_p + self.x_f
+        return self.x, cost
     
     def pi(self, x, t):
-        return matmul(self.lqr.K[t], x)
+        return self.u_f + matmul(self.lqr.K[t], x - self.x_f)
 
     def cost(self, x, u):
         return (matmul(x.T, Q, x) + matmul(u.T, R, u))[0,0]
        
 
 if __name__ == '__main__':
-    T = 1000
+    T = 100
     xdims = 2
     udims = 1
     
@@ -70,15 +71,29 @@ if __name__ == '__main__':
     Q = np.array([[1, 0], [0, 1]])
     R = np.array([[1]])
 
-    init_state = np.array([[1], [2]])
+    init_state = np.array([[-5], [-5]])
+
+    x_f = np.array([[5], [4]])
+    u_f = np.array([[0]])
 
     sys = SystemLTI(xdims, udims, T, A, B)
-    robot = RobotLTI(sys, init_state, T, Q, R)
+    robot = RobotLTI(sys, init_state, T, Q, R, x_f=x_f, u_f=u_f)
     robot.reg_lti()
 
     print robot.x
+    states = [robot.x]
     for i in range(T):
         u = robot.pi(robot.x, i)
-        cost, x = robot.control(u)
-        print cost, x
-    
+        x, cost = robot.control(u)
+        print "\n"
+        print "t = " + str(i)
+        print "cost: " + str(cost)
+        print "control: " + str(u)
+        print "state: " + str(x)
+        states.append(robot.x)
+
+
+    vis = Visualizer()
+    vis.set_recording(states)
+    vis.set_target(x_f)
+    vis.show()

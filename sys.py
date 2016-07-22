@@ -27,12 +27,19 @@ class SystemLTI():
             B = np.zeros((self.xdims, self.udims))
         self.B = B
 
+        self.mean = np.zeros(self.xdims)
+        self.cov = np.identity(self.xdims) * 2
+
     def At(self, t = None):
         return self.A
     def Bt(self, t = None):
         return self.B
     def wt(self):
-        return np.zeros((self.xdims, 1))
+        w = np.random.multivariate_normal(self.mean, self.cov, 1)
+        w = np.reshape(w, (self.xdims, 1))
+        print w
+        return w
+        #return np.zeros((self.xdims, 1))
 
     def reset_robot(self):
         self.robot.x = self.robot.INITIAL_STATE
