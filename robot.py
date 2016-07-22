@@ -57,8 +57,19 @@ class RobotLTI():
         return self.u_f + matmul(self.lqr.K[t], x - self.x_f)
 
     def cost(self, x, u):
-        return (matmul(x.T, Q, x) + matmul(u.T, R, u))[0,0]
-       
+        return (matmul(x.T, self.Q, x) + matmul(u.T, self.R, u))[0,0]
+      
+    def rollout(self, verbose=False):
+        T = self.sys.T
+        states = [self.x]
+        for t in range(T):
+            u = self.pi(self.x, t)
+            x, cost = self.control(u)
+            if verbose:
+                print ("\nt = " + str(t) + "\ncost: " + str(cost)
+                        + "\ncontrol: " + str(u) + "\nstate: " + str(x))
+            states.append(self.x)
+        return states
 
 if __name__ == '__main__':
     T = 100
@@ -71,23 +82,23 @@ if __name__ == '__main__':
     Q = np.array([[1, 0], [0, 1]])
     R = np.array([[1]])
 
-    init_state = np.array([[-5], [-5]])
+    init_state = np.array([[-10], [15]])
 
-    x_f = np.array([[5], [4]])
+    x_f = np.array([[0], [0]])
     u_f = np.array([[0]])
 
-    sys = SystemLTI(xdims, udims, T, A, B)
-    init_state = sys.initial_state(init_state, noise=True)
+    sys = SystemLTI(xdims, udims, T, A, B, stoch=False)
+    #init_state = sys.initial_state(init_state, noise=True)
     robot = RobotLTI(sys, init_state, T, Q, R, x_f=x_f, u_f=u_f)
     robot.reg_lti()
 
     print robot.x
     states = [robot.x]
-    for i in range(T):
-        u = robot.pi(robot.x, i)
+    for t in range(T):
+        u = robot.pi(robot.x, t)
         x, cost = robot.control(u)
         print "\n"
-        print "t = " + str(i)
+        print "t = " + str(t)
         print "cost: " + str(cost)
         print "control: " + str(u)
         print "state: " + str(x)

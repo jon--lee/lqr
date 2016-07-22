@@ -8,7 +8,8 @@ class Visualizer():
         self.target = None
 
     def set_target(self, x_f):
-        self.x_f = np.reshape(x_f, (2))
+        self.x_f = np.reshape(x_f, (x_f.size))
+        self.x_f = np.array([x_f[0], x_f[1]])
         
 
     def set_recording(self, recording):
@@ -37,7 +38,8 @@ class Visualizer():
     def process_states(self):
         recording2 = []
         for state in self.recording:
-            state = np.reshape(state, (2))
+            state = np.reshape(state, (state.size))
+            state = np.array([state[0], state[1]])
             recording2.append(state)
         self.recording = recording2
             

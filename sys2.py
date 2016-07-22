@@ -10,7 +10,7 @@ a = 10
 
 class SystemLTI():
 
-    def __init__(self, xdims, udims, T, A = None, B = None, w = None):
+    def __init__(self, xdims, udims, T, A = None, B = None, stoch=False):
         self.xdims = xdims
         self.udims = udims
         
@@ -26,20 +26,23 @@ class SystemLTI():
         if B is None:
             B = np.zeros((self.xdims, self.udims))
         self.B = B
-
+        
+        self.stoch = stoch
         self.mean = np.zeros(self.xdims)
-        self.cov_init = np.identity(self.xdims) * 10
-        self.cov = np.identity(self.xdims) * 2
+        self.cov_init = np.identity(self.xdims) * 20
+        self.cov = np.identity(self.xdims) * .1
 
     def At(self, t = None):
         return self.A
     def Bt(self, t = None):
         return self.B
     def wt(self):
-        w = np.random.multivariate_normal(self.mean, self.cov, 1)
-        w = np.reshape(w, (self.xdims, 1))
-        return w
-        #return np.zeros((self.xdims, 1))
+        if self.stoch:
+            w = np.random.multivariate_normal(self.mean, self.cov, 1)
+            w = np.reshape(w, (self.xdims, 1))
+            return w
+        else:
+            return np.zeros((self.xdims, 1))
     
     def initial_state(self, x, noise = False):
         if not noise:
@@ -68,3 +71,16 @@ class SystemLTI():
         return x_p
 
 
+
+class SystemPointMass(SystemLTI):
+
+    def wt(self):
+        if self.stoch:
+            w = np.random.multivariate_normal(self.mean, self.cov, 1)
+            w = np.reshape(w, (self.xdims, 1))
+            #w[0, 0] = 0.0
+            #w[1, 0] = 0.0
+            return w
+        else:
+            return np.zeros((self.xdims, 1))
+    
