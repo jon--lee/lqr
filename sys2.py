@@ -6,7 +6,7 @@ handles steps
 handles noise
 handles time
 """
-
+a = 10
 
 class SystemLTI():
 
@@ -28,6 +28,7 @@ class SystemLTI():
         self.B = B
 
         self.mean = np.zeros(self.xdims)
+        self.cov_init = np.identity(self.xdims) * 10
         self.cov = np.identity(self.xdims) * 2
 
     def At(self, t = None):
@@ -37,9 +38,15 @@ class SystemLTI():
     def wt(self):
         w = np.random.multivariate_normal(self.mean, self.cov, 1)
         w = np.reshape(w, (self.xdims, 1))
-        print w
         return w
         #return np.zeros((self.xdims, 1))
+    
+    def initial_state(self, x, noise = False):
+        if not noise:
+            return x
+        w = np.random.multivariate_normal(self.mean, self.cov_init, 1)
+        w = np.reshape(w, (self.xdims, 1))
+        return x + w
 
     def reset_robot(self):
         self.robot.x = self.robot.INITIAL_STATE
@@ -59,5 +66,5 @@ class SystemLTI():
         x_p = self.dyn(x, u)
         self.t += 1
         return x_p
-        
+
 

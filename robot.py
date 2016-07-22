@@ -1,7 +1,7 @@
-from lqr2 import LQR
-from sys2 import SystemLTI
+from lqr import LQR
 import numpy as np
 from vis import Visualizer
+from sys2 import SystemLTI
 from utils import matmul
 """
 Robot
@@ -77,6 +77,7 @@ if __name__ == '__main__':
     u_f = np.array([[0]])
 
     sys = SystemLTI(xdims, udims, T, A, B)
+    init_state = sys.initial_state(init_state, noise=True)
     robot = RobotLTI(sys, init_state, T, Q, R, x_f=x_f, u_f=u_f)
     robot.reg_lti()
 
