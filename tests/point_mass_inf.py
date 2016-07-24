@@ -1,13 +1,13 @@
 from sys2 import SystemLTI, SystemPointMass
 from env import point_mass as pm
 from vis import Visualizer
-from robot import RobotLTI
+from robot import RobotLTI, InfRobotLTI
 
 import numpy as np
 
 if __name__ == '__main__':
     avg_costs = []
-    for i in range(100):
+    for i in range(400):
         T = 100
         xdims = pm.xdims
         udims = pm.udims
@@ -22,7 +22,7 @@ if __name__ == '__main__':
         u_f =  np.array([[0], [0]])
 
         sys = SystemPointMass(xdims, udims, T, A, B, stoch=True)
-        robot = RobotLTI(sys, init_state, T, Q, R, x_f=x_f, u_f=u_f)
+        robot = InfRobotLTI(sys, init_state, T, Q, R, x_f=x_f, u_f=u_f)
         robot.reg_lti()
 
         states, controls, costs = robot.rollout(verbose=False)
@@ -32,8 +32,7 @@ if __name__ == '__main__':
         # vis.set_target(x_f)
         # vis.show()
 
+        # print "TOTAL COST: " + str(sum(costs))
         avg_costs.append(sum(costs))
 
     print "Avg. cost: " + str(np.mean(avg_costs))
-
-

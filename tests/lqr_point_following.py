@@ -22,7 +22,7 @@ if __name__ == '__main__':
     robot = RobotLTI(sys, init_state, T, Q, R, x_f=x_f, u_f=u_f)
     robot.reg_lti()
 
-    states = robot.rollout(verbose=True)
+    states, controls = robot.rollout(verbose=True)
     
     vis = Visualizer()
     vis.set_recording(states)

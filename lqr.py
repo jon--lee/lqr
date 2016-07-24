@@ -12,6 +12,11 @@ class LQR():
         self.K = [None]*T
         self.P = [None]*(T+1)
         
+    def Kt(self, t):
+        return self.K[t]
+
+    def Pt(self, t):
+        return self.P[t]
 
     def converge(self):
         P = self.P

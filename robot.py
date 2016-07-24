@@ -1,4 +1,5 @@
 from lqr import LQR
+from inf_lqr import InfLQR
 import numpy as np
 from vis import Visualizer
 from sys2 import SystemLTI
@@ -45,7 +46,7 @@ class RobotLTI():
 
     def reg_lti(self):
         self.lqr.converge()
-        return self.lqr.K[0]
+        return self.lqr.Kt(0)
 
     def control(self, u):
         x_p = self.sys.step(self.x - self.x_f, u - self.u_f)
@@ -54,7 +55,7 @@ class RobotLTI():
         return self.x, cost
     
     def pi(self, x, t):
-        return self.u_f + matmul(self.lqr.K[t], x - self.x_f)
+        return self.u_f + matmul(self.lqr.Kt(t), x - self.x_f)
 
     def cost(self, x, u):
         return (matmul(x.T, self.Q, x) + matmul(u.T, self.R, u))[0,0]
@@ -62,14 +63,31 @@ class RobotLTI():
     def rollout(self, verbose=False):
         T = self.sys.T
         states = [self.x]
+        controls = []
+        costs = []
         for t in range(T):
             u = self.pi(self.x, t)
+            controls.append(u)
             x, cost = self.control(u)
             if verbose:
                 print ("\nt = " + str(t) + "\ncost: " + str(cost)
                         + "\ncontrol: " + str(u) + "\nstate: " + str(x))
             states.append(self.x)
-        return states
+            costs.append(cost)
+        return states, controls, costs
+
+
+
+class InfRobotLTI(RobotLTI):
+
+    def __init__(self, sys, initial_state, T, Q = None, R = None, x_f = None, u_f = None):
+        RobotLTI.__init__(self, sys, initial_state, T, Q, R, x_f, u_f)
+        self.lqr = InfLQR(self.sys, self)        
+
+
+
+
+
 
 if __name__ == '__main__':
     T = 100
