@@ -27,10 +27,11 @@ if __name__ == '__main__':
 
         states, controls, costs = robot.rollout(verbose=False)
         
-        # vis = Visualizer()
-        # vis.set_recording(states)
-        # vis.set_target(x_f)
-        # vis.show()
+        if i == 0:
+            vis = Visualizer()
+            vis.set_recording(states)
+            vis.set_target(x_f)
+            vis.show()
 
         # print "TOTAL COST: " + str(sum(costs))
         avg_costs.append(sum(costs))
