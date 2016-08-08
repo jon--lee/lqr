@@ -21,7 +21,7 @@ if __name__ == '__main__':
         x_f = np.array([[10], [2], [0], [0]])
         u_f =  np.array([[0], [0]])
 
-        sys = SystemPointMass(xdims, udims, T, A, B, stoch=True)
+        sys = SystemPointMass(xdims, udims, T, A, B, stoch=False)
         robot = RobotLTI(sys, init_state, T, Q, R, x_f=x_f, u_f=u_f)
         robot.reg_lti()
 

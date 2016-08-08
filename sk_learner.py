@@ -1,10 +1,22 @@
 import numpy as np
-
+from sklearn import grid_search
 class SKLearner():
 
     def __init__(self, estimator):
         self.estimator = estimator
         self.data = []
+
+    def gridsearch(self, params):
+        clf = grid_search.GridSearchCV(self.estimator, params)
+
+        X = []
+        U = []
+        for x, u in self.data:
+            X.append(x)
+            U.append(u)
+        clf.fit(X, U)
+        return clf.best_estimator_, clf.best_params_
+
 
     def add(self, x, u):
         x = x.reshape(x.size)

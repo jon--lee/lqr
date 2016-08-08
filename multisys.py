@@ -28,7 +28,7 @@ class PiecewiseLinearSys():
         self.stoch = stoch
         self.mean = np.zeros(self.xdims)
         self.cov_init = np.identity(self.xdims) * 20
-        self.cov = np.identity(self.xdims) * .00001#.1
+        self.cov = np.identity(self.xdims) * .1
 
     def A1t(self, t=None):
         return self.A1

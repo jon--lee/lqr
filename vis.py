@@ -84,7 +84,7 @@ class Visualizer():
         figure.scatter(xs, ys, s=size, c='g')        
 
         plt.title(title)
-        plt.savefig(direc + title + '.png')
+        plt.savefig(direc + title + '.svg', format='svg', dpi=1000)
         plt.clf()
         #plt.show()
         #plt.close()

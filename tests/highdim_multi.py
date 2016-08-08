@@ -37,8 +37,13 @@ if __name__ == '__main__':
     print "Done rolling out."
 
     print "Supervised Learning"
-    im_lr = LinearRegression()
+    im_lr = LinearRegression(fit_intercept=False)
+    learner = SKLearner(im_lr)
+    for i in range(70):
+        sup_state, sup_control = sup_states[i], sup_controls[i]
+        learner.add(sup_state, sup_control)
     
+
 
 
     """

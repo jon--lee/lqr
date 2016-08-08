@@ -4,3 +4,8 @@
 *.eps
 *.zip
 *.swo
+*.svg
+converging/
+diverging/
+data/old/
+*.npy

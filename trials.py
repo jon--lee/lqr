@@ -6,16 +6,20 @@ def compute_loss(states, controls, robot):
     loss = 0.0
     for state, control in zip(states, controls):
         sup_control = robot.pi(state, 0)
+        control = control.reshape(len(control))
+        sup_control = sup_control.reshape(len(sup_control))
         loss += np.linalg.norm(control - sup_control) / float(len(controls))
     return loss
 
 
-def compute_acc(robot, learner):
+def compute_acc(learner):
     diff = 0.0
     data = learner.data
     for state, control in data:
         pred_control = learner.predict(state)
-        diff += np.linalg.norm(control - pred_control) / float(len(data))
+        pred_control = pred_control.reshape(len(pred_control))
+        control = control.reshape(len(control))
+        diff += np.linalg.norm(pred_control - control) / float(len(data))
     return diff
 
 
@@ -32,7 +36,7 @@ def supervisor_trial(robot, sys):
             sys.reset_robot()
             states, controls, costs = robot.rollout(verbose=False)
             costs = np.array(costs) / float(SAMPLES)
-            avg_costs[i] += sum(costs)
+            avg_costs[i] += sum(costs) / float(robot.sys.T)
 
         # Learn and collect trajectories
         sys.reset_robot()
@@ -51,6 +55,7 @@ def supervise_trial(learner, robot, sys):
     total_costs = []
     avg_costs = np.zeros(ITERATIONS)
     avg_loss = np.zeros(ITERATIONS)
+    accs = []
     for i in range(ITERATIONS):
         # Initial learning if no data
         if i == 0:
@@ -65,7 +70,7 @@ def supervise_trial(learner, robot, sys):
             sys.reset_robot()
             states, controls, costs = robot.rollout_learner(learner, verbose=False)
             costs = np.array(costs) / float(SAMPLES)
-            avg_costs[i] += sum(costs)
+            avg_costs[i] += sum(costs) / float(robot.sys.T)
             avg_loss[i] += compute_loss(states, controls, robot) / float(SAMPLES)
 
         # Learn and collect trajectories
@@ -80,7 +85,8 @@ def supervise_trial(learner, robot, sys):
         trajs.append(states)
         traj_controls.append(controls)
         total_costs.append(sum(costs))
-    return trajs, traj_controls, total_costs, avg_costs, avg_loss
+        accs.append(compute_acc(learner))
+    return trajs, traj_controls, total_costs, avg_costs, avg_loss, accs
 
 
 def dagger_trial(learner, robot, sys):
@@ -90,6 +96,7 @@ def dagger_trial(learner, robot, sys):
     total_costs = []
     avg_costs = np.zeros(ITERATIONS)
     avg_loss = np.zeros(ITERATIONS)
+    accs = []
     for i in range(ITERATIONS):
         # Initial learning
         if i == 0:
@@ -103,7 +110,7 @@ def dagger_trial(learner, robot, sys):
             sys.reset_robot()
             states, controls, costs = robot.rollout_learner(learner, verbose=False)
             costs = np.array(costs) / float(SAMPLES)
-            avg_costs[i] += sum(costs)
+            avg_costs[i] += sum(costs) / float(robot.sys.T)
             avg_loss[i] += compute_loss(states, controls, robot) / float(SAMPLES)
 
 
@@ -116,7 +123,8 @@ def dagger_trial(learner, robot, sys):
         traj_controls.append(controls)
         trajs.append(states)
         total_costs.append(sum(costs))
-    return trajs, traj_controls, total_costs, avg_costs, avg_loss
+        accs.append(compute_acc(learner))
+    return trajs, traj_controls, total_costs, avg_costs, avg_loss, accs
 
 
 def dagger_final(learner, robot, sys):
@@ -131,7 +139,7 @@ def dagger_final(learner, robot, sys):
             sys.reset_robot()
             states, controls, costs = robot.rollout_learner(learner, verbose=False)
             costs = np.array(costs) / float(SAMPLES)
-            avg_costs[i] += sum(costs)
+            avg_costs[i] += sum(costs) / float(robot.sys.T)
             avg_loss[i] += compute_loss(states, controls, robot) / float(SAMPLES)
 
         # Collect trajectories

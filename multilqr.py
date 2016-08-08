@@ -40,38 +40,44 @@ class InfMultiLQR():
         np.save("data/k2.npy", self.K2)
 
     def converge1(self):
+        print "Converging 1"
         P = self.robot.Qt()
         R = self.robot.Rt()
         Q = self.robot.Qt()
         A = self.sys.A1t()
         B = self.sys.B1t()
+        i = 0
         while True:
             new_P = Q + matmul(A.T, P, A) - matmul(
                 A.T, P, B, np.linalg.inv(R + matmul(B.T, P, B)), B.T, P, A)
             diff = new_P - P
             delta = np.max(np.abs(new_P - P))
-            if delta < 1e-2:
+            if delta < 1e-10 and i > self.sys.T*1000:
                 break
             P = new_P
+            i += 1
 
         self.P1 = P
         self.K1 = -matmul(np.linalg.inv(R + matmul(B.T, P, B)), B.T, P, A)
         return
 
     def converge2(self):
+        print "Converging 2"
         P = self.robot.Qt()
         R = self.robot.Rt()
         Q = self.robot.Qt()
         A = self.sys.A2t()
         B = self.sys.B2t()
+        i = 0
         while True:
             new_P = Q + matmul(A.T, P, A) - matmul(
                 A.T, P, B, np.linalg.inv(R + matmul(B.T, P, B)), B.T, P, A)
             diff = new_P - P
             delta = np.max(np.abs(new_P - P))
-            if delta < 1e-2:
+            if delta < 1e-10 and i > self.sys.T * 1000:
                 break
             P = new_P
+            i += 1
 
         self.P2 = P
         self.K2 = -matmul(np.linalg.inv(R + matmul(B.T, P, B)), B.T, P, A)

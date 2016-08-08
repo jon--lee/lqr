@@ -1,5 +1,6 @@
 from multisys import PiecewiseLinearSys
 from env import point_mass_multi as pmm
+#from env import mass_diff as md
 from vis import Visualizer
 from multirobot import MultiRobot 
 from sklearn.linear_model import LinearRegression
@@ -7,22 +8,23 @@ from sklearn.kernel_ridge import KernelRidge
 from sk_learner import SKLearner
 import numpy as np
 import trials
+import IPython
 
 if __name__ == '__main__':
-    T = 100
+    T = 35
     xdims = pmm.xdims
     udims = pmm.udims
     
     A1 = pmm.A1
     B1 = pmm.B1
-    A2 = np.random.rand(4, 4)#pmm.A2#np.random.rand(4, 4)#pmm.A2
-    B2 = np.random.rand(4, 2)#pmm.B2#np.random.rand(4, 2)#pmm.B2
+    A2 = pmm.A2#np.random.rand(4, 4)#pmm.A2
+    B2 = pmm.B2#np.random.rand(4, 2)#pmm.B2
     Q = pmm.Q
     R = pmm.R
     init_state = pmm.init_state
     
-    x_f = np.array([[0], [0], [0], [0]])#x_f = np.array([[10], [2], [0], [0]])
-    u_f =  np.array([[0], [0]])
+    x_f = np.array([[0], [0], [0], [0]])#np.array([[0], [0], [0], [0]])#x_f = np.array([[10], [2], [0], [0]])
+    u_f = np.array([[0], [0]])
 
     sys = PiecewiseLinearSys(xdims, udims, T, A1, B1, A2, B2, stoch=True)
     robot = MultiRobot(sys, init_state, T, Q, R, x_f=x_f, u_f=u_f)
@@ -31,7 +33,7 @@ if __name__ == '__main__':
     #robot.lqr.K2 = np.random.rand(2, 4)
 
     data_directory = '/Users/JonathanLee/Documents/Research/lqr/data/'
-    TRIALS = 1
+    TRIALS = 20
     sup_data = np.zeros((TRIALS, trials.ITERATIONS))
     im_data = np.zeros((TRIALS, trials.ITERATIONS))
     dagger_data = np.zeros((TRIALS, trials.ITERATIONS))
@@ -40,6 +42,9 @@ if __name__ == '__main__':
     im_loss_data = np.zeros((TRIALS, trials.ITERATIONS))
     dagger_loss_data = np.zeros((TRIALS, trials.ITERATIONS))
 
+    im_acc_data = np.zeros((TRIALS, trials.ITERATIONS))
+    dagger_acc_data = np.zeros((TRIALS, trials.ITERATIONS))
+
     # SUPERVISOR
     print "Supervisor trajectories"
     for t in range(TRIALS):
@@ -47,32 +52,38 @@ if __name__ == '__main__':
         sup_trajs, sup_traj_controls, sup_costs, sup_avg_costs = trials.supervisor_trial(robot, sys)
         sup_data[t, :] = sup_avg_costs
 
-    # SUPERVISED LEARNING
+    # SUPERVISED LEARNIN
     print "Supervised Learning trajectories"
     for t in range(TRIALS):
         print "Supervised Learning trial: " + str(t)
-        im_lr = LinearRegression(fit_intercept=False)#KernelRidge(kernel='rbf')
+        # im_lr = KernelRidge(kernel='poly', gamma=100, degree=3)
+        # im_lr = KernelRidge(kernel='rbf', gamma=100)
+        im_lr = LinearRegression(fit_intercept=False)#KernelRidge(kernel='rbf')#
         im_learner = SKLearner(im_lr)
-        im_trajs, im_traj_controls, im_costs, im_avg_costs, im_avg_loss = trials.supervise_trial(im_learner, robot, sys)
+        im_trajs, im_traj_controls, im_costs, im_avg_costs, im_avg_loss, im_accs = trials.supervise_trial(im_learner, robot, sys)
         im_data[t, :] = im_avg_costs
         im_loss_data[t, :] = im_avg_loss
+        im_acc_data[t, :] = im_accs
 
     # DAGGER LEARNING
     print "DAgger Learning trajectories"
     for t in range(TRIALS):
         print "DAgger Learning trial: " + str(t)
-        dagger_lr = LinearRegression(fit_intercept=False)#KernelRidge(kernel='rbf')
+        # dagger_lr = KernelRidge(kernel='poly', gamma=100, degree=3)
+        # dagger_lr = KernelRidge(kernel='rbf', gamma=100)
+        dagger_lr = LinearRegression(fit_intercept=False)#KernelRidge(kernel='rbf')#
         dagger_learner = SKLearner(dagger_lr)
-        dagger_trajs, dagger_traj_controls, dagger_costs, dagger_avg_costs, dagger_avg_loss = trials.dagger_trial(dagger_learner, robot, sys)
+        dagger_trajs, dagger_traj_controls, dagger_costs, dagger_avg_costs, dagger_avg_loss, dagger_accs = trials.dagger_trial(dagger_learner, robot, sys)
         dagger_final_trajs, dagger_final_controls, dagger_final_costs, dagger_final_avg_costs, dagger_final_avg_loss = trials.dagger_final(dagger_learner, robot, sys)
 
         dagger_data[t, :] = dagger_avg_costs
         dagger_loss_data[t, :] = dagger_avg_loss
         dagger_final_data[t, :] = dagger_final_avg_costs
+        dagger_acc_data[t, :] = dagger_accs
 
-    print im_lr.coef_
-    print dagger_lr.coef_
-    print robot.lqr.K1
+    # print im_lr.coef_
+    # print dagger_lr.coef_
+    # print robot.lqr.K1
 
     vis = Visualizer()
     vis.show_trajs(sup_trajs, x_f, "sup_trajs", data_directory)
@@ -81,10 +92,47 @@ if __name__ == '__main__':
     vis.show_trajs(dagger_final_trajs, x_f, "dagger_final_trajs", data_directory)
 
 
+
+    print im_accs
+    print dagger_accs
+
+    print "\n\n\n"
+    for state, control in im_learner.data:
+        print control
+        print im_learner.predict(state)
+        print dagger_learner.predict(state)
+        state = state.reshape((xdims, 1))
+        print robot.pi(state, 0)
+        
+        break
+        
+    print "\n\n\n"
+
+
+    print trials.compute_acc(im_learner)
+    print trials.compute_acc(dagger_learner)
+
+
     sup_costs = np.array(sup_data)
     im_costs = np.array(im_data)
     dagger_costs = np.array(dagger_data)
 
+    print "\n\n\nCOSTS"
+    print "Sup costs"
+    print sup_costs
+    print "SL costs"
+    print im_costs
+    print "Dagger costs"
+    print dagger_costs
+    print "\n\n\n"
+    im_accs = np.array([im_accs])
+    dagger_accs = np.array([dagger_accs])
+
+
+    data_dir = './data/raw/'
+    np.save(data_dir + 'sup_costs', sup_costs)
+    np.save(data_dir + 'im_costs', im_costs)
+    np.save(data_dir + 'dagger_costs', dagger_costs)
 
     filename = data_directory + 'cost_comparisons.eps'
     vis.get_perf(sup_costs)
@@ -99,7 +147,30 @@ if __name__ == '__main__':
 
 
 
+    filename = data_directory + 'accuracy_comparisons.eps'
+    vis.get_perf(im_acc_data)
+    vis.get_perf(dagger_acc_data)
+    vis.plot(['Supervised', 'DAgger'], "Acc", filename)
 
+
+    """
+    print "\nGrid searching"
+    params = {"gamma": [.01, .05, .1, .5, 1.0, 5.0, 10.0, 50.0, 100.0, 500.0, 1000.0],
+        }#"degree": [1, 2, 3, 4, 5, 6]}
+
+    im_best_est, im_best_params = im_learner.gridsearch(params)
+    dagger_best_est, dagger_best_params = dagger_learner.gridsearch(params)
+    print "\nBest parameters"
+    print im_best_params
+    print dagger_best_params
+
+    im_learner.estimator = im_best_est
+    dagger_learner.estimator = dagger_best_est
+
+    print "\nResulting training losses on gridsearched params"
+    print trials.compute_acc(im_learner)
+    print trials.compute_acc(dagger_learner)
+    """
     """
 
     

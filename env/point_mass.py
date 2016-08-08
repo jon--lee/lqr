@@ -3,6 +3,8 @@ mass = float(20)
 xdims = 4
 udims = 2
 
+m = .0001
+
 A = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])
 B = np.array([[0, 0], [0, 0], [1/mass, 0], [0, 1/mass]])
 Q = np.identity(xdims)

@@ -13,21 +13,11 @@ def isPositive(x):
             return False
     return True
 
+#THESE WERE CHANGED, CHANGE THEM BACK
+#
+
 
 def inBoundary(x):
-    #return  True
-    border = 12#-5#12
-    if x[0, 0] < border and x[1, 0] < border:#12 and x[1, 0] < 12:#< -5 and x[1, 0] < -5:
-        return True
-    else:
-        return False
-    # border = -12
-    # if x[0, 0] > border:
-    #     return False
-    # else:
-    #     return True
-
-def inBoundary2(x):
     #border = -10e100
     #for i in range(len(x)):
     #    if x[i, 0] >= border:
